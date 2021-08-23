@@ -1,1 +1,0 @@
-python train.py --img 640 --batch 8 --epochs 50 --hyp hyp_cows.yaml --data YoloCows_GSD0.05_Q0.5.yaml --weights yolov5l.pt 
