@@ -71,6 +71,11 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
 
     # Compute F1 (harmonic mean of precision and recall)
     f1 = 2 * p * r / (p + r + 1e-16)
+
+    # Peak F1 confidence threshold
+    y = f1.mean(0)
+    conf_max_thresh = px[y.argmax()]
+
     if plot:
         plot_pr_curve(px, py, ap, Path(save_dir) / 'PR_curve.png', names)
         plot_mc_curve(px, f1, Path(save_dir) / 'F1_curve.png', names, ylabel='F1')
@@ -78,7 +83,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
         plot_mc_curve(px, r, Path(save_dir) / 'R_curve.png', names, ylabel='Recall')
 
     i = f1.mean(0).argmax()  # max F1 index
-    return p[:, i], r[:, i], ap, f1[:, i], unique_classes.astype('int32')
+    return p[:, i], r[:, i], ap, f1[:, i], conf_max_thresh, unique_classes.astype('int32')
 
 
 def compute_ap(recall, precision):

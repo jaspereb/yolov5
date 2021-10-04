@@ -16,6 +16,7 @@ from threading import Thread
 import numpy as np
 import torch
 from tqdm import tqdm
+from scipy.io import savemat
 
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())  # add yolov5/ to path
@@ -147,6 +148,7 @@ def run(data,
         dataloader = create_dataloader(data[task], imgsz, batch_size, gs, single_cls, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
+    f1_conf_thresh = 0
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
     names = {k: v for k, v in enumerate(model.names if hasattr(model, 'names') else model.module.names)}
@@ -154,7 +156,7 @@ def run(data,
     s = ('%20s' + '%11s' * 6) % ('Class', 'Images', 'Labels', 'P', 'R', 'mAP@.5', 'mAP@.5:.95')
     p, r, f1, mp, mr, map50, map, t0, t1, t2 = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3, device=device)
-    jdict, stats, ap, ap_class = [], [], [], []
+    jdict, stats, ap, ap_class, dets_list, labels_list = [], [], [], [], [], []
     for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         t_ = time_sync()
         img = img.to(device, non_blocking=True)
@@ -204,12 +206,17 @@ def run(data,
                 tbox = xywh2xyxy(labels[:, 1:5])  # target boxes
                 scale_coords(img[si].shape[1:], tbox, shape, shapes[si][1])  # native-space labels
                 labelsn = torch.cat((labels[:, 0:1], tbox), 1)  # native-space labels
+                labels_list.append(labelsn.tolist())
                 correct = process_batch(predn, labelsn, iouv)
                 if plots:
                     confusion_matrix.process_batch(predn, labelsn)
             else:
                 correct = torch.zeros(pred.shape[0], niou, dtype=torch.bool)
+                labels_list.append(None)
             stats.append((correct.cpu(), pred[:, 4].cpu(), pred[:, 5].cpu(), tcls))  # (correct, conf, pcls, tcls)
+
+            # Make count stats
+            dets_list.append(predn.tolist())
 
             # Save/log
             if save_txt:
@@ -228,12 +235,32 @@ def run(data,
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
-        p, r, ap, f1, ap_class = ap_per_class(*stats, plot=plots, save_dir=save_dir, names=names)
+        p, r, ap, f1, f1_conf_thresh, ap_class = ap_per_class(*stats, plot=plots, save_dir=save_dir, names=names)
         ap50, ap = ap[:, 0], ap.mean(1)  # AP@0.5, AP@0.5:0.95
         mp, mr, map50, map = p.mean(), r.mean(), ap50.mean(), ap.mean()
         nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
     else:
         nt = torch.zeros(1)
+
+    # Print count statistics
+    if(f1_conf_thresh == 0):
+        print("Errror: confidence thresh is zero")
+    lblcounts, detcounts = [], []
+    for lbls,dets in zip(labels_list,dets_list):
+        if(lbls is None):
+            lblcount = 0
+        else:
+            lblcount = len(lbls)
+        detcount = 0
+        for i in dets:
+            if(i[4] > f1_conf_thresh):
+                detcount = detcount + 1
+        lblcounts.append(lblcount)
+        detcounts.append(detcount)
+
+    mdic = {"lblcount": lblcounts, "detcount": detcounts, "f1_conf_thresh": f1_conf_thresh}
+    countfile = save_dir / 'countData.mat'
+    savemat(countfile, mdic)
 
     # Print results
     pf = '%20s' + '%11i' * 2 + '%11.3g' * 4  # print format
