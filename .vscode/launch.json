@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "train testing",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python.pythonPath": "~/git/yolov5/virtualenv/bin",
+            "args": [
+                "--img",
+                "640",
+                "--data",
+                "YoloCows_GSD0.50_Q1.0.yaml",
+                "--device",
+                "cpu",
+                "--batch",
+                "1",
+                "--weights",
+                "yolov5l.pt"
+            ]
+        }
+    ]
+}
