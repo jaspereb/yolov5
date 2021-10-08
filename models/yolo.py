@@ -98,7 +98,8 @@ class Model(nn.Module):
         if anchors:
             LOGGER.info(f'Overriding model.yaml anchors with anchors={anchors}')
             self.yaml['anchors'] = round(anchors)  # override yaml value
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch])  # model, savelist
+        #self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch])  # model, savelist
+        self.model = build_yolo_dual(ch = [ch])
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
         self.inplace = self.yaml.get('inplace', True)
 
@@ -107,7 +108,7 @@ class Model(nn.Module):
         if isinstance(m, Detect):
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            m.stride = torch.tensor([s / x.shape[-2] for x in self.forward(torch.zeros(1, ch, s, s))])  # forward
+            m.stride = torch.tensor([s / x.shape[-2] for x in self.forward(torch.zeros(1, ch, s, s),torch.zeros(1, ch, s, s))])  # forward
             m.anchors /= m.stride.view(-1, 1, 1)
             check_anchor_order(m)
             self.stride = m.stride
@@ -118,10 +119,10 @@ class Model(nn.Module):
         self.info()
         LOGGER.info('')
 
-    def forward(self, x, augment=False, profile=False, visualize=False):
+    def forward(self, img1, img2, augment=False, profile=False, visualize=False):
         if augment:
-            return self._forward_augment(x)  # augmented inference, None
-        return self._forward_once(x, profile, visualize)  # single-scale inference, train
+            return self._forward_augment(img1)  # augmented inference, None
+        return self._forward_once(img1, img2, profile, visualize)  # single-scale inference, train
 
     def _forward_augment(self, x):
         img_size = x.shape[-2:]  # height, width
@@ -137,18 +138,35 @@ class Model(nn.Module):
         y = self._clip_augmented(y)  # clip augmented tails
         return torch.cat(y, 1), None  # augmented inference, train
 
-    def _forward_once(self, x, profile=False, visualize=False):
+    def _forward_once(self, x, x2, profile=False, visualize=False):
         y, dt = [], []  # outputs
-        for m in self.model:
-            if m.f != -1:  # if not from previous layer
-                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-            if profile:
+        for m in self.model: #For each model layer
+            if m.f != -1:  # if not from previous layer. Input layers are also -1
+                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers. Either a single layer of list of multiple inputs (eg concat)
+            if profile: #Never runs
+                raise NotImplementedError('Not implemented for dual input')
                 self._profile_one_layer(m, x, dt)
-            x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
-            if visualize:
+            x = m(x)  # this builds the sequential model
+            y.append(x if m.i in self.save else None)  # save output so that out of order layers can reference it
+            if visualize: #Never runs
+                raise NotImplementedError('Not implemented for dual input')
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
-        return x
+        return x #x is now a linked sequential model
+
+    def _forward_once_single(self, x, profile=False, visualize=False): #Legacy single input mode
+        y, dt = [], []  # outputs
+        for m in self.model: #For each model layer
+            if m.f != -1:  # if not from previous layer. Input layers are -1
+                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers. Either a single layer of list of multiple inputs (eg concat)
+            if profile: #Never runs
+                raise NotImplementedError('Not implemented for dual input')
+                self._profile_one_layer(m, x, dt)
+            x = m(x)  # this builds the sequential model
+            y.append(x if m.i in self.save else None)  # save output so that out of order layers can reference it
+            if visualize: #Never runs
+                raise NotImplementedError('Not implemented for dual input')
+                feature_visualization(x, m.type, m.i, save_dir=visualize)
+        return x #x is now a linked sequential model
 
     def _descale_pred(self, p, flips, scale, img_size):
         # de-scale predictions following augmented inference (inverse operation)
@@ -178,7 +196,7 @@ class Model(nn.Module):
         y[-1] = y[-1][:, i:]  # small
         return y
 
-    def _profile_one_layer(self, m, x, dt):
+    def _profile_one_layer(self, m, x, dt): #Time profiling of a layer performance
         c = isinstance(m, Detect)  # is final layer, copy input as inplace fix
         o = thop.profile(m, inputs=(x.copy() if c else x,), verbose=False)[0] / 1E9 * 2 if thop else 0  # FLOPs
         t = time_sync()
@@ -232,6 +250,10 @@ class Model(nn.Module):
     def info(self, verbose=False, img_size=640):  # print model information
         model_info(self, verbose, img_size)
 
+def build_yolo_dual(self, img1, img2):
+    stack = 0
+
+    return stack
 
 def parse_model(d, ch):  # model_dict, input_channels(3)
     LOGGER.info('\n%3s%18s%3s%10s  %-40s%-30s' % ('', 'from', 'n', 'params', 'module', 'arguments'))
@@ -240,7 +262,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
     no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
 
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d['backbone'] + d['head']):  # from, number, module, args
+    for i, (f, n, m, args) in enumerate(d['backbone1'] + d['backbone2'] + d['head']):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
         for j, a in enumerate(args):
             try:
@@ -273,7 +295,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
             c2 = ch[f] // args[0] ** 2
         else:
             c2 = ch[f]
-
+ 
         m_ = nn.Sequential(*[m(*args) for _ in range(n)]) if n > 1 else m(*args)  # module
         t = str(m)[8:-2].replace('__main__.', '')  # module type
         np = sum([x.numel() for x in m_.parameters()])  # number params

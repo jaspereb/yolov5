@@ -267,7 +267,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
-        model.train()
+        model.train() #Just puts the model in training mode (for dropout...)
 
         # Update image weights (optional, single-GPU only)
         if opt.image_weights:
@@ -312,7 +312,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
             # Forward
             with amp.autocast(enabled=cuda):
-                pred = model(imgs)  # forward
+                pred = model(imgs,imgs)  # forward
                 loss, loss_items = compute_loss(pred, targets.to(device))  # loss scaled by batch_size
                 if RANK != -1:
                     loss *= WORLD_SIZE  # gradient averaged between devices in DDP mode
@@ -509,6 +509,7 @@ def main(opt, callbacks=Callbacks()):
 
     # Train
     if not opt.evolve:
+        LOGGER.info('Now calling train function from main')
         train(opt.hyp, opt, device, callbacks)
         if WORLD_SIZE > 1 and RANK == 0:
             LOGGER.info('Destroying process group... ')

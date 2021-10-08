@@ -22,6 +22,8 @@
                 "YoloCows_GSD0.50_Q1.0.yaml",
                 "--device",
                 "cpu",
+                "--cfg",
+                "dual.yaml",
                 "--batch",
                 "1",
                 "--weights",
