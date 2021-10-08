@@ -106,7 +106,7 @@ class YoloDual(nn.Module):
         )
         
         self.Detect = nn.Sequential(
-            Detect(classes, anchors) #classes, anchors, ch, inplace
+            Detect(classes, anchors, [256,512,1024]) #classes, anchors, ch, inplace
         )
 
         # Equivalent of
