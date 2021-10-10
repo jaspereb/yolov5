@@ -133,10 +133,42 @@ class YoloDual(nn.Module):
         
     def forward(self, img1, img2):
         x = self.forward_split(img1,img2)
+        # x = self.forward_siamese(img1,img2)
         return x
     
-    def forward_siamese():
-        raise NotImplementedError("MAke ME")
+    def forward_siamese(self, img1, img2):
+        #Backbones
+        b1 = self.B1S1(img1)
+        b3 = self.B1S2(b1)
+        b5 = self.B1S3(b3)
+
+        b2 = self.B1S1(img2)
+        b4 = self.B1S2(b2)
+        b6 = self.B1S3(b4)
+
+        #Combine spatial pyramid outputs
+        p7 = torch.cat((b5, b6), dim=1) #9
+        p8 = torch.cat((b3, b4), dim=1) #6
+        p9 = torch.cat((b1, b2), dim=1) #4
+
+        #Head
+        h1 = self.H1(p7)
+        h2 = self.H2(h1)
+        h3 = torch.cat((h2,p8), dim=1) #Combine w 6
+        h4 = self.H3(h3)
+        h5 = self.H4(h4)
+        h6 = torch.cat((h5,p9), dim=1) #Combine w 4
+        h7 = self.H5(h6)
+        h8 = self.H6(h7)
+        h9 = torch.cat((h8,h4), dim=1) #Combine w 14
+        h10 = self.H7(h9)
+        h11 = self.H8(h10)
+        h12 = torch.cat((h11,h1), dim=1) #Combine w 10
+        h13 = self.H9(h12)
+        h14 = self.Detect([h7,h10,h13])
+
+        x = h13
+
         return x
 
     def forward_split(self, img1, img2):
