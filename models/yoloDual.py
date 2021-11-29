@@ -1,4 +1,6 @@
 #Construct a yolo-like model which is dual input for multiple image inputs.
+import sys
+sys.path.append("/home/jasper/git/yolov5")
 
 import torch.nn as nn
 import torch 
@@ -93,6 +95,7 @@ class YoloDual(nn.Module):
 
         # Build strides, anchors
         m = self.Detect  # Detect()
+        m = m[0]
         s = 256  # 2x min stride
         m.inplace = True
         ch = 3

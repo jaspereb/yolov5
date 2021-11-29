@@ -19,7 +19,7 @@
                 "--img",
                 "640",
                 "--data",
-                "YoloCows_GSD0.50_Q1.0.yaml",
+                "coco.yaml",
                 "--device",
                 "cpu",
                 "--cfg",
