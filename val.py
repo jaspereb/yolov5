@@ -161,18 +161,23 @@ def run(data,
     dt, p, r, f1, mp, mr, map50, map = [0.0, 0.0, 0.0], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class, dets_list, labels_list = [], [], [], [], [], []
-    for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
+    for batch_i, (img, img2, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         t1 = time_sync()
         img = img.to(device, non_blocking=True)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
+        img2 = img2.to(device, non_blocking=True)
+        img2 = img2.half() if half else img2.float()  # uint8 to fp16/32
+        img2 /= 255.0  # 0 - 255 to 0.0 - 1.0
         targets = targets.to(device)
         nb, _, height, width = img.shape  # batch size, channels, height, width
         t2 = time_sync()
         dt[0] += t2 - t1
 
+        print("Need to update val.py with masked loss fn and check dual input doesnt mess up height,width, batch calcs")
+
         # Run model
-        out, train_out = model(img, augment=augment)  # inference and training outputs
+        out, train_out = model(img, img2, augment=augment)  # inference and training outputs
         dt[1] += time_sync() - t2
 
         # Compute loss

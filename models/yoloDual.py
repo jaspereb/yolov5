@@ -196,12 +196,15 @@ class Model(nn.Module):
     def info(self, verbose=False, img_size=640):  # print model information
         model_info(self, verbose, img_size)
 
-    def forward(self, img1, img2):
+    def forward(self, img1, img2, augment=False):
+        if(augment):
+            raise NotImplementedError
+
         if(self.siamese):
-            LOGGER.info(f'Now linking siamese dual Yolo Model')
+            # LOGGER.info(f'Now linking siamese dual Yolo Model')
             x  = self.forward_siamese(img1,img2)
         else:
-            LOGGER.info(f'Now linking non-siamese dual Yolo Model')
+            # LOGGER.info(f'Now linking non-siamese dual Yolo Model')
             x = self.forward_split(img1,img2)
         return x
     
@@ -236,7 +239,7 @@ class Model(nn.Module):
         h13 = self.H9(h12)
         h14 = self.Detect([h7,h10,h13])
 
-        x = h13
+        x = h14
 
         return x
 
@@ -272,7 +275,7 @@ class Model(nn.Module):
         h13 = self.H9(h12)
         h14 = self.Detect([h7,h10,h13])
 
-        x = h13
+        x = h14
 
         return x
 
