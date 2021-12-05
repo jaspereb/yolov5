@@ -34,6 +34,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Detect(nn.Module):
+    print("Tried to call old yolo version")
+    raise NotImplementedError
+
     stride = None  # strides computed during build
     onnx_dynamic = False  # ONNX export parameter
 
@@ -79,6 +82,9 @@ class Detect(nn.Module):
         return torch.stack((xv, yv), 2).view((1, 1, ny, nx, 2)).float()
 
 class Model(nn.Module):
+    print("Tried to call old yolo version")
+    raise NotImplementedError
+    
     def __init__(self, cfg='yolov5l.yaml', ch=3, nc=None, anchors=None):  # model, input channels, number of classes
         super().__init__()
         if isinstance(cfg, dict):
@@ -193,6 +199,7 @@ class Model(nn.Module):
 
 def make_yolo_dual(d,ch):
     #Replaces parse_model functionality. That fn uses the yaml to generate a model, whereas this one directly builds a yolo dual model 
+
 
     return None
 

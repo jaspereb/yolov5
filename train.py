@@ -34,7 +34,7 @@ ROOT = ROOT.relative_to(Path.cwd())  # relative
 
 import val  # for end-of-epoch mAP
 from models.experimental import attempt_load
-from models.yolo import Model
+from models.yoloDual import Model
 from utils.autoanchor import check_anchors
 from utils.datasets import create_dataloader
 from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
@@ -196,7 +196,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
     # Image sizes
     gs = max(int(model.stride.max()), 32)  # grid size (max stride)
-    nl = model.model[-1].nl  # number of detection layers (used for scaling hyp['obj'])
+    nl = model.Detect[-1].nl  # number of detection layers (used for scaling hyp['obj'])
     imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
 
     # DP mode

@@ -370,7 +370,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
     def __init__(self, path, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
                  cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
-        if(self.augment):
+        if(augment):
             print("Augmentation not supported for dual inputs")
             raise NotImplementedError
         self.img_size = img_size
