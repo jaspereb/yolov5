@@ -111,18 +111,20 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     check_suffix(weights, '.pt')  # check weights
     pretrained = weights.endswith('.pt')
     if pretrained:
-        with torch_distributed_zero_first(RANK):
-            weights = attempt_download(weights)  # download if not found locally
-        ckpt = torch.load(weights, map_location=device)  # load checkpoint
-        model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-        model.load_state_dict(csd, strict=False)  # load
-        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+        print("Still need to implement this")
+        raise NotImplementedError
+        # with torch_distributed_zero_first(RANK):
+        #     weights = attempt_download(weights)  # download if not found locally
+        # ckpt = torch.load(weights, map_location=device)  # load checkpoint
+        # model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+        # exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+        # csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+        # csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+        # model.load_state_dict(csd, strict=False)  # load
+        # LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
-        model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-
+        model = Model(classes=nc, anchors=hyp.get('anchors'), siamese=False).to(device)
+        
     # Freeze
     freeze = [f'model.{x}.' for x in range(freeze)]  # layers to freeze
     for k, v in model.named_parameters():
@@ -170,25 +172,27 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     # Resume
     start_epoch, best_fitness = 0, 0.0
     if pretrained:
-        # Optimizer
-        if ckpt['optimizer'] is not None:
-            optimizer.load_state_dict(ckpt['optimizer'])
-            best_fitness = ckpt['best_fitness']
+        print("Still need to test this")
+        raise NotImplementedError
+        # # Optimizer
+        # if ckpt['optimizer'] is not None:
+        #     optimizer.load_state_dict(ckpt['optimizer'])
+        #     best_fitness = ckpt['best_fitness']
 
-        # EMA
-        if ema and ckpt.get('ema'):
-            ema.ema.load_state_dict(ckpt['ema'].float().state_dict())
-            ema.updates = ckpt['updates']
+        # # EMA
+        # if ema and ckpt.get('ema'):
+        #     ema.ema.load_state_dict(ckpt['ema'].float().state_dict())
+        #     ema.updates = ckpt['updates']
 
-        # Epochs
-        start_epoch = ckpt['epoch'] + 1
-        if resume:
-            assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
-        if epochs < start_epoch:
-            LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
-            epochs += ckpt['epoch']  # finetune additional epochs
+        # # Epochs
+        # start_epoch = ckpt['epoch'] + 1
+        # if resume:
+        #     assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
+        # if epochs < start_epoch:
+        #     LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
+        #     epochs += ckpt['epoch']  # finetune additional epochs
 
-        del ckpt, csd
+        # del ckpt, csd
 
     # Image sizes
     gs = max(int(model.stride.max()), 32)  # grid size (max stride)
@@ -239,7 +243,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
     # DDP mode
     if cuda and RANK != -1:
-        model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
+        raise NotImplementedError
+        # model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
 
     # Model parameters
     hyp['box'] *= 3. / nl  # scale to layers

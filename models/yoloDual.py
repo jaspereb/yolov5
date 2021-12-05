@@ -12,9 +12,9 @@ from utils.torch_utils import copy_attr, fuse_conv_and_bn, initialize_weights, m
 
 LOGGER = logging.getLogger(__name__)
 
-class YoloDual(nn.Module):
+class Model(nn.Module):
     def __init__(self, classes, anchors, siamese=False):
-        super(YoloDual, self).__init__()
+        super(Model, self).__init__()
         self.siamese = siamese
         LOGGER.info(f'Now building dual input Yolo Model')
 
@@ -193,7 +193,8 @@ class YoloDual(nn.Module):
     def _initialize_biases(self, cf=None):  # initialize biases into Detect(), cf is class frequency
         # https://arxiv.org/abs/1708.02002 section 3.3
         # cf = torch.bincount(torch.tensor(np.concatenate(dataset.labels, 0)[:, 0]).long(), minlength=nc) + 1.
-        m = self.model[-1]  # Detect() module
+        m = self.Detect[-1]
+        # m = self.model[-1]  # Detect() module
         for mi, s in zip(m.m, m.stride):  # from
             b = mi.bias.view(m.na, -1)  # conv.bias(255) to (3,85)
             b.data[:, 4] += math.log(8 / (640 / s) ** 2)  # obj (8 objects per 640 image)
@@ -203,7 +204,7 @@ class YoloDual(nn.Module):
 if __name__ == '__main__':
     classes = 1
     anchors = [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]]
-    model = YoloDual(classes, anchors, False)
+    model = Model(classes, anchors, False)
     batch_size = 1
     x1 = torch.randn(batch_size, 3, 256, 256)
     output = model(x1, x1)
