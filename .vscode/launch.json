@@ -34,7 +34,7 @@
             "name": "dual train testing",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "train.py",
             "console": "integratedTerminal",
             "python.pythonPath": "~/git/yolov5/virtualenv/bin",
             "args": [
