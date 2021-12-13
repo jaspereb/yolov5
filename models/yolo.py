@@ -34,13 +34,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Detect(nn.Module):
-    print("Tried to call old yolo version")
-    raise NotImplementedError
 
     stride = None  # strides computed during build
     onnx_dynamic = False  # ONNX export parameter
 
     def __init__(self, nc=80, anchors=(), ch=(), inplace=True):  # detection layer
+        print("Tried to call old yolo version")
+        raise NotImplementedError
         super().__init__()
         self.nc = nc  # number of classes
         self.no = nc + 5  # number of outputs per anchor
@@ -82,10 +82,10 @@ class Detect(nn.Module):
         return torch.stack((xv, yv), 2).view((1, 1, ny, nx, 2)).float()
 
 class Model(nn.Module):
-    print("Tried to call old yolo version")
-    raise NotImplementedError
     
     def __init__(self, cfg='yolov5l.yaml', ch=3, nc=None, anchors=None):  # model, input channels, number of classes
+        print("Tried to call old yolo version")
+        raise NotImplementedError
         super().__init__()
         if isinstance(cfg, dict):
             self.yaml = cfg  # model dict

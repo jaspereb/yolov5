@@ -44,12 +44,14 @@
                 "BCDP-mini.yaml",
                 "--device",
                 "cpu",
+                "--hyp",
+                "hyp.noAugment.yaml",
                 "--cfg",
                 "dual.yaml",
                 "--batch",
                 "1",
                 "--weights",
-                ""
+                "yolov5l.pt"
             ]
         }
     ]

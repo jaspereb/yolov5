@@ -111,17 +111,18 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     check_suffix(weights, '.pt')  # check weights
     pretrained = weights.endswith('.pt')
     if pretrained:
-        print("Still need to implement this")
-        raise NotImplementedError
-        # with torch_distributed_zero_first(RANK):
-        #     weights = attempt_download(weights)  # download if not found locally
-        # ckpt = torch.load(weights, map_location=device)  # load checkpoint
-        # model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-        # exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-        # csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-        # csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-        # model.load_state_dict(csd, strict=False)  # load
-        # LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+        # print("Still need to implement this")
+        # raise NotImplementedError
+        with torch_distributed_zero_first(RANK):
+            weights = attempt_download(weights)  # download if not found locally
+        ckpt = torch.load(weights, map_location=device)  # load checkpoint
+        model = Model(classes=nc, anchors=hyp.get('anchors'), siamese=False).to(device)
+        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+        csdp = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+        csdm = model.state_dict()
+        csd = intersect_dicts(csdp, csdm, exclude=exclude)  # intersect
+        model.load_state_dict(csd, strict=False)  # load
+        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
         model = Model(classes=nc, anchors=hyp.get('anchors'), siamese=False).to(device)
         
@@ -344,7 +345,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
                 pbar.set_description(('%10s' * 2 + '%10.4g' * 5) % (
                     f'{epoch}/{epochs - 1}', mem, *mloss, targets.shape[0], imgs.shape[-1]))
-                callbacks.run('on_train_batch_end', ni, model, imgs, targets, paths, plots, opt.sync_bn)
+                callbacks.run('on_train_batch_end', ni, model, imgs, imgs2, targets, paths, plots, opt.sync_bn)
             # end batch ------------------------------------------------------------------------------------------------
 
         # Scheduler
