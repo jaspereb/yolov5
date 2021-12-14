@@ -44,7 +44,7 @@ from utils.downloads import attempt_download
 from utils.loss import ComputeLoss
 from utils.plots import plot_labels, plot_evolve
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, intersect_dicts, select_device, \
-    torch_distributed_zero_first
+    torch_distributed_zero_first, fix_dual_state_dict
 from utils.loggers.wandb.wandb_utils import check_wandb_resume
 from utils.metrics import fitness
 from utils.loggers import Loggers
@@ -120,6 +120,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
         csdp = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
         csdm = model.state_dict()
+        csd = fix_dual_state_dict(csdp,csdm)
         csd = intersect_dicts(csdp, csdm, exclude=exclude)  # intersect
         model.load_state_dict(csd, strict=False)  # load
         LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report

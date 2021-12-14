@@ -157,6 +157,36 @@ def intersect_dicts(da, db, exclude=()):
     # Dictionary intersection of matching keys and shapes, omitting 'exclude' keys, using da values
     return {k: v for k, v in da.items() if k in db and not any(x in k for x in exclude) and v.shape == db[k].shape}
 
+def fix_dual_state_dict(csdp,csdm):
+    #Fix the yolov5l.pt state dictionary to match the yolo dual layer names so it can be used with dualModel.load_state_dict(csd,strict=False)
+        #If the model definition changes at all, the numbers here will need to change. This implementation is brittle, but I don't know of a better way
+
+    csdplist = []
+    csdplistvals = []
+    csdmlist = []
+    csdmlistvals = []
+    #Need to index by position, so convert to list
+    for key in csdp:
+        csdplist.append(key)
+        csdplistvals.append(csdp[key])
+
+    for key in csdm:
+        csdmlist.append(key)
+        csdmlistvals.append(csdm[key])
+
+    newcsd = {}
+
+    for idx in range(0,len(csdmlist)):
+        if(idx < 403): #backbone 1
+            key = csdmlist[idx]
+            val = csdplistvals[idx]
+        else: #backbone 2
+            key = csdmlist[idx]
+            val = csdplistvals[idx-402]
+
+        newcsd[key] = val
+
+    return newcsd
 
 def initialize_weights(model):
     for m in model.modules():
