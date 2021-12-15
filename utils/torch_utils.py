@@ -161,6 +161,8 @@ def fix_dual_state_dict(csdp,csdm):
     #Fix the yolov5l.pt state dictionary to match the yolo dual layer names so it can be used with dualModel.load_state_dict(csd,strict=False)
         #If the model definition changes at all, the numbers here will need to change. This implementation is brittle, but I don't know of a better way
 
+    #There is some mismatch in the head portion of the networks, so only the backbone weights are loaded, these are the most important anyway
+    backbonelength = 403
     csdplist = []
     csdplistvals = []
     csdmlist = []
@@ -176,15 +178,13 @@ def fix_dual_state_dict(csdp,csdm):
 
     newcsd = {}
 
-    for idx in range(0,len(csdmlist)):
-        if(idx < 403): #backbone 1
-            key = csdmlist[idx]
-            val = csdplistvals[idx]
-        else: #backbone 2
-            key = csdmlist[idx]
-            val = csdplistvals[idx-402]
+    for idx in range(0,backbonelength): #for each model layer
+        key = csdmlist[idx]
+        key2 = csdmlist[idx + backbonelength-1]
+        val = csdplistvals[idx]
 
         newcsd[key] = val
+        newcsd[key2] = val
 
     return newcsd
 

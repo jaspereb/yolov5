@@ -121,7 +121,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         csdp = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
         csdm = model.state_dict()
         csd = fix_dual_state_dict(csdp,csdm)
-        csd = intersect_dicts(csdp, csdm, exclude=exclude)  # intersect
+        csd = intersect_dicts(csd, csdm, exclude=exclude)  # intersect
         model.load_state_dict(csd, strict=False)  # load
         LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
@@ -175,26 +175,25 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     start_epoch, best_fitness = 0, 0.0
     if pretrained:
         print("Still need to test this")
-        raise NotImplementedError
-        # # Optimizer
-        # if ckpt['optimizer'] is not None:
-        #     optimizer.load_state_dict(ckpt['optimizer'])
-        #     best_fitness = ckpt['best_fitness']
+        # Optimizer
+        if ckpt['optimizer'] is not None:
+            optimizer.load_state_dict(ckpt['optimizer'])
+            best_fitness = ckpt['best_fitness']
 
-        # # EMA
-        # if ema and ckpt.get('ema'):
-        #     ema.ema.load_state_dict(ckpt['ema'].float().state_dict())
-        #     ema.updates = ckpt['updates']
+        # EMA
+        if ema and ckpt.get('ema'):
+            ema.ema.load_state_dict(ckpt['ema'].float().state_dict())
+            ema.updates = ckpt['updates']
 
-        # # Epochs
-        # start_epoch = ckpt['epoch'] + 1
-        # if resume:
-        #     assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
-        # if epochs < start_epoch:
-        #     LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
-        #     epochs += ckpt['epoch']  # finetune additional epochs
+        # Epochs
+        start_epoch = ckpt['epoch'] + 1
+        if resume:
+            assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
+        if epochs < start_epoch:
+            LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
+            epochs += ckpt['epoch']  # finetune additional epochs
 
-        # del ckpt, csd
+        del ckpt, csd
 
     # Image sizes
     gs = max(int(model.stride.max()), 32)  # grid size (max stride)
