@@ -19,7 +19,7 @@
                 "--img",
                 "640",
                 "--data",
-                "BCD.yaml",
+                "BCDP-mini.yaml",
                 "--device",
                 "cpu",
                 "--hyp",
