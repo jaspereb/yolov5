@@ -3,6 +3,10 @@ train: /home/jasper/Datasets/BCD/images/train
 val: /home/jasper/Datasets/BCD/images/val 
 test: /home/jasper/Datasets/BCD/images/test
 
+#train: /home/jasper/Datasets/ReSplitPatches/images/train
+#val: /home/jasper/Datasets/ReSplitPatches/images/val 
+#test: /home/jasper/Datasets/ReSplitPatches/images/test
+
 # number of classes
 nc: 1
 

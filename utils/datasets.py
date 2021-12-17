@@ -558,6 +558,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
             if self.augment:
+                print("CAUTION: Augmenting Data")
                 img, labels = random_perspective(img, labels,
                                                  degrees=hyp['degrees'],
                                                  translate=hyp['translate'],
@@ -570,6 +571,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
 
         if self.augment:
+            print("CAUTION: Augmenting Data")
             # Albumentations
             img, labels = self.albumentations(img, labels)
             nl = len(labels)  # update after albumentations
