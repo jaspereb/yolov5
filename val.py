@@ -174,10 +174,14 @@ def run(data,
         t2 = time_sync()
         dt[0] += t2 - t1
 
-        print("Need to update val.py with masked loss fn and check dual input doesnt mess up height,width, batch calcs")
+        #print("Need to update val.py with masked loss fn and check dual input doesnt mess up height,width, batch calcs")
 
         # Run model
-        out, train_out = model(img, img2, augment=augment)  # inference and training outputs
+        try:
+            out, train_out = model(img, img2, augment=augment)  # inference and training outputs
+        except TypeError:
+            print("Got multiple augment args? Did you try to run the dual eval on a single input model?")
+
         dt[1] += time_sync() - t2
 
         # Compute loss

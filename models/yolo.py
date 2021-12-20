@@ -54,6 +54,7 @@ class Detect(nn.Module):
         self.inplace = inplace  # use in-place ops (e.g. slice assignment)
 
     def forward(self, x):
+        raise NotImplementedError
         z = []  # inference output
         for i in range(self.nl):
             x[i] = self.m[i](x[i])  # conv
@@ -125,6 +126,7 @@ class Model(nn.Module):
         LOGGER.info('')
 
     def forward(self, x, augment=False, profile=False, visualize=False):
+        raise NotImplementedError
         if augment:
             raise NotImplementedError
             # return self._forward_augment(x)  # augmented inference, None

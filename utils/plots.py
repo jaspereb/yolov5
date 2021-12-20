@@ -148,7 +148,7 @@ def output_to_target(output):
     return np.array(targets)
 
 
-def plot_images(images, images2, targets, paths=None, fname='images.jpg', names=None, max_size=1920, max_subplots=16):
+def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max_size=1920, max_subplots=16):
     print("Plot_images is only using the first of the image pair")
     # Plot image grid with labels
     if isinstance(images, torch.Tensor):
@@ -183,7 +183,7 @@ def plot_images(images, images2, targets, paths=None, fname='images.jpg', names=
     for i in range(i + 1):
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
         annotator.rectangle([x, y, x + w, y + h], None, (255, 255, 255), width=2)  # borders
-        if paths:
+        if paths is not None:
             annotator.text((x + 5, y + 5 + h), text=Path(paths[i]).name[:40], txt_color=(220, 220, 220))  # filenames
         if len(targets) > 0:
             ti = targets[targets[:, 0] == i]  # image targets

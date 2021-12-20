@@ -85,17 +85,22 @@ class Ensemble(nn.ModuleList):
         return y, None  # inference, train output
 
 
-def attempt_load(weights, map_location=None, inplace=True, fuse=True):
-    from models.yolo import Detect, Model
+def attempt_load(weights, map_location=None, inplace=True, fuse=False):
+    from models.yoloDual import Detect, Model
 
-    # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
-    model = Ensemble()
-    for w in weights if isinstance(weights, list) else [weights]:
-        ckpt = torch.load(attempt_download(w), map_location=map_location)  # load
-        if fuse:
-            model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().fuse().eval())  # FP32 model
-        else:
-            model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().eval())  # without layer fuse
+    assert(len(weights) == 1),"Model ensemble not supported for yolo dual"
+    assert(not fuse),"Fuse not tested"
+    ckpt = torch.load(attempt_download(weights[0]), map_location=map_location)  # load
+    model = (ckpt['ema'].float().eval())
+
+    # # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
+    # model = Ensemble()
+    # for w in weights if isinstance(weights, list) else [weights]:
+    #     ckpt = torch.load(attempt_download(w), map_location=map_location)  # load
+    #     if fuse:
+    #         model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().fuse().eval())  # FP32 model
+    #     else:
+    #         model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().eval())  # without layer fuse
 
 
     # Compatibility updates
@@ -105,11 +110,13 @@ def attempt_load(weights, map_location=None, inplace=True, fuse=True):
         elif type(m) is Conv:
             m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatibility
 
-    if len(model) == 1:
-        return model[-1]  # return model
-    else:
-        print(f'Ensemble created with {weights}\n')
-        for k in ['names']:
-            setattr(model, k, getattr(model[-1], k))
-        model.stride = model[torch.argmax(torch.tensor([m.stride.max() for m in model])).int()].stride  # max stride
-        return model  # return ensemble
+    return model
+    
+    # if len(model) == 1:
+    #     return model[-1]  # return model
+    # else:
+    #     print(f'Ensemble created with {weights}\n')
+    #     for k in ['names']:
+    #         setattr(model, k, getattr(model[-1], k))
+    #     model.stride = model[torch.argmax(torch.tensor([m.stride.max() for m in model])).int()].stride  # max stride
+    #     return model  # return ensemble
