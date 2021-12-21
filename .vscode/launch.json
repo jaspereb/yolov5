@@ -63,19 +63,20 @@
             "python.pythonPath": "~/git/yolov5/virtualenv/bin",
             "args": [
                 "--img",
-                "640",
+                "320",
                 "--data",
                 "BCDP.yaml",
-                "--device",
-                "cpu",
+                //"--device",
+                //"cpu",
                 "--batch",
                 "1",
                 "--weights",
                 "models/best.pt",
                 "--task",
                 "test",
-                "--save-hybrid",
-                "--save-conf"
+                "--save-txt"
+                //"--save-hybrid",
+                //"--save-conf"
             ]
         }
     ]
