@@ -74,9 +74,9 @@
                 "models/best.pt",
                 "--task",
                 "test",
-                "--save-txt"
+                "--save-txt",
                 //"--save-hybrid",
-                //"--save-conf"
+                "--save-conf"
             ]
         }
     ]
